@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>Assurix Dashboard</title>
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#004aad">
+  <style>
+    body { font-family: Arial; background:#f5f7fb; margin:0; }
+    header { background:#004aad; color:white; padding:15px; text-align:center; }
+    .container { padding:20px; }
+    .card { background:white; padding:15px; margin-bottom:10px; border-radius:10px; box-shadow:0 0 5px rgba(0,0,0,0.1); }
+    button { background:#004aad; color:white; padding:10px 15px; border:none; border-radius:5px; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <header><h1>لوحة شركات التأمين</h1></header>
+  <div class="container" id="list"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAQsQ9BU6gcps6XSVgKGKLn7pq_VKeX9Tk",
+      authDomain: "assurix-17f53.firebaseapp.com",
+      projectId: "assurix-17f53",
+      storageBucket: "assurix-17f53.firebasestorage.app",
+      messagingSenderId: "793139269214",
+      appId: "1:793139269214:web:c0bc20bd1c14a98cb86ecf"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.sendOffer = async function(id, email) {
+      const price = prompt("أدخل عرض السعر (DA):");
+      if (!price) return;
+      try {
+        await updateDoc(doc(db, "assurix_requests", id), { offer: price, offerEmail: email });
+        alert("تم إرسال العرض بنجاح 🎉");
+        location.reload();
+      } catch (err) { alert("حدث خطأ"); }
+    };
+
+    async function loadRequests() {
+      const snap = await getDocs(collection(db, "assurix_requests"));
+      const list = document.getElementById("list");
+      snap.forEach(doc => {
+        const data = doc.data();
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `<p><b>Email:</b> ${data.email}</p><p><b>Car:</b> ${data.marque}</p>
+                         <button onclick="sendOffer('${doc.id}', '${data.email}')">إرسال عرض سعر</button>`;
+        list.appendChild(div);
+      });
+    }
+    loadRequests();
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js'); }
+  </script>
+</body>
+</html>
