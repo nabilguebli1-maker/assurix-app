@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assurix - طلب تأمين</title>
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#004aad">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f7fb; margin: 0; padding: 0; }
+    header { background: #004aad; color: white; text-align: center; padding: 15px; }
+    .container { width: 95%; max-width: 600px; margin: auto; padding: 20px; }
+    form { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+    button { margin-top: 25px; padding: 15px; width: 100%; background: #004aad; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 18px; font-weight: bold; }
+    #offerBox { margin-top: 25px; background: #eef3ff; padding: 20px; border-radius: 8px; border: 2px dashed #004aad; text-align: center; }
+    #offerText { font-size: 24px; color: #004aad; font-weight: bold; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <header><h1>Assurix</h1></header>
+  <div class="container">
+    <form id="insuranceForm">
+      <h2>معلومات الطلب</h2>
+      <label>البريد الإلكتروني</label>
+      <input type="email" id="email" required>
+      <label>ماركة السيارة</label>
+      <input type="text" id="marque" required>
+      <label>نوع السيارة</label>
+      <input type="text" id="model" required>
+      <label>الولاية</label>
+      <input type="text" id="state" required>
+      <button type="submit">إرسال الطلب</button>
+      <div id="offerBox">
+        <b>عرض السعر المستلم:</b>
+        <p id="offerText">أدخل إيميلك لمتابعة العرض</p>
+      </div>
+    </form>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAQsQ9BU6gcps6XSVgKGKLn7pq_VKeX9Tk",
+      authDomain: "assurix-17f53.firebaseapp.com",
+      projectId: "assurix-17f53",
+      storageBucket: "assurix-17f53.firebasestorage.app",
+      messagingSenderId: "793139269214",
+      appId: "1:793139269214:web:c0bc20bd1c14a98cb86ecf"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const offerText = document.getElementById("offerText");
+
+    function listenOffer(email) {
+      const q = query(collection(db, "assurix_requests"), where("email", "==", email));
+      onSnapshot(q, (snapshot) => {
+        let found = null;
+        snapshot.forEach(doc => { if (doc.data().offer) found = doc.data(); });
+        if (found) offerText.innerText = found.offer + " DA";
+        else offerText.innerText = "لا يوجد عرض بعد";
+      });
+    }
+
+    document.getElementById("email").addEventListener("blur", (e) => {
+      if (e.target.value) listenOffer(e.target.value);
+    });
+
+    document.getElementById("insuranceForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        await addDoc(collection(db, "assurix_requests"), {
+          email: document.getElementById("email").value,
+          marque: document.getElementById("marque").value,
+          model: document.getElementById("model").value,
+          state: document.getElementById("state").value,
+          createdAt: new Date()
+        });
+        alert("تم إرسال طلبك بنجاح 🎉");
+      } catch (err) { alert("خطأ في الإرسال"); }
+    });
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js'); }
+  </script>
+</body>
+</html>
