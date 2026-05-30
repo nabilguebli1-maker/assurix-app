@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Assurix</title>
+  <title>تسجيل الدخول - شركات التأمين - Assurix</title>
   
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#004aad">
@@ -19,29 +19,41 @@
       margin: 0;
     }
 
-    .box {
+    .container {
       background: white;
       padding: 30px;
-      border-radius: 10px;
+      border-radius: 15px;
       width: 90%;
-      max-width: 350px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      text-align: center;
+      max-width: 400px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
 
-    h2 { 
-      color: #004aad; 
-      margin-bottom: 20px; 
+    h2 {
+      color: #004aad;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    p.subtitle {
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 25px;
     }
 
     input, button {
       width: 100%;
       padding: 12px;
-      margin-top: 10px;
-      border-radius: 5px;
+      margin-top: 12px;
+      border-radius: 8px;
       border: 1px solid #ccc;
       box-sizing: border-box;
       font-size: 16px;
+    }
+
+    input:focus {
+      border-color: #004aad;
+      outline: none;
     }
 
     button {
@@ -50,41 +62,60 @@
       border: none;
       cursor: pointer;
       font-weight: bold;
+      margin-top: 20px;
+      transition: 0.3s;
     }
 
-    button:hover { 
-      opacity: 0.9; 
+    button:hover {
+      background: #00337a;
     }
 
-    .back-link {
-      display: block;
-      margin-top: 15px;
-      color: #666;
-      text-decoration: none;
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+
+    .links {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
       font-size: 14px;
+    }
+
+    .links a {
+      color: #004aad;
+      text-decoration: none;
+    }
+
+    .links a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 
 <body>
 
-<div class="box">
-  <h2>دخول شركة التأمين</h2>
+<div class="container">
+  <h2>تسجيل الدخول</h2>
+  <p class="subtitle">خاص بشركات التأمين المسجلة بالمنصة</p>
 
   <input type="email" id="email" placeholder="البريد الإلكتروني">
-  <input type="password" id="password" placeholder="كلمة السر">
+  <input type="password" id="password" placeholder="كلمة المرور">
 
-  <button onclick="login()">دخول</button>
-  
-  <a href="./home.html" class="back-link">العودة للرئيسية</a>
+  <button id="loginBtn">دخول الحساب</button>
+
+  <div class="links">
+    <a href="./company-register.html">تسجيل شركة جديدة</a>
+    <a href="./home.html">الرئيسية</a>
+  </div>
 </div>
 
 <script type="module">
-  // استيراد Firebase SDK
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  // إعدادات Firebase الخاصة بمشروعك Assurix
+  // إعدادات Firebase الحقيقية والخاصة بمشروعك
   const firebaseConfig = {
     apiKey: "AIzaSyAQsQ9BU6gcps6XSVgKGKLn7pq_VKeX9Tk",
     authDomain: "assurix-17f53.firebaseapp.com",
@@ -94,36 +125,72 @@
     appId: "1:793139269214:web:c0bc20bd1c14a98cb86ecf"
   };
 
-  // تهيئة Firebase
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const db = getFirestore(app);
 
-  // وظيفة تسجيل الدخول
-  window.login = async function() {
-    const email = document.getElementById("email").value;
+  document.getElementById("loginBtn").addEventListener("click", async () => {
+    const btn = document.getElementById("loginBtn");
+    const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
 
     if (!email || !password) {
-      alert("يرجى إدخال البريد الإلكتروني وكلمة السر");
+      alert("يرجى إدخال البريد الإلكتروني وكلمة المرور");
       return;
     }
 
+    btn.disabled = true;
+    btn.innerText = "جاري التحقق من الحساب...";
+
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert("تم تسجيل الدخول بنجاح 🎉");
-      // التوجيه إلى لوحة التحكم بعد النجاح
-      window.location.href = "./dashboard.html";
+      // 1. تسجيل الدخول البرمجي في Auth
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // 2. البحث عن بيانات وتفاصيل الشركة في Firestore ومطابقة الـ uid
+      const q = query(collection(db, "insurance_companies"), where("uid", "==", user.uid));
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        alert("تنبيه: تم تسجيل الدخول كحساب مستخدم، ولكن لا توجد بيانات مسجلة لهذه الشركة في قاعدة البيانات.");
+        btn.disabled = false;
+        btn.innerText = "دخول الحساب";
+        return;
+      }
+
+      const company = snap.docs[0].data();
+
+      // 3. التحقق الأمني من حالة مراجعة الحساب قبل السماح بالدخول
+      if (company.status !== "approved") {
+        alert("عذراً، طلب الانضمام الخاص بشركتكم لا يزال قيد المراجعة أو تم رفضه من قبل إدارة المنصة.");
+        btn.disabled = false;
+        btn.innerText = "دخول الحساب";
+        return;
+      }
+
+      // 4. التوجيه الناجح
+      alert(`مرحباً بك مجدداً في Assurix 🎉\nتم تسجيل دخول شركة: ${company.companyName}`);
+      window.location.href = "dashboard.html";
+
     } catch (error) {
-      alert("فشل الدخول: تأكد من الإيميل وكلمة السر، وتأكد من تفعيل Auth في Firebase");
-      console.error("Login Error:", error.message);
+      console.error("خطأ في تسجيل الدخول:", error);
+      
+      // تبسيط رسائل خطأ Firebase للمستخدم النهائي
+      if(error.code === "auth/invalid-credential" || error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
+        alert("خطأ: البريد الإلكتروني أو كلمة المرور غير صحيحة.");
+      } else {
+        alert("حدث خطأ أثناء الاتصال: " + error.message);
+      }
+      
+      btn.disabled = false;
+      btn.innerText = "دخول الحساب";
     }
-  }
+  });
 </script>
 
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
-      .then(() => console.log("Service Worker Registered"));
+    navigator.serviceWorker.register('./sw.js');
   }
 </script>
 
