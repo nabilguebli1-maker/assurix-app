@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>طلب تأمين سيارة - Assurix</title>
+  
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#004aad">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      color: #004aad;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    h3 {
+      color: #333;
+      border-bottom: 2px solid #004aad;
+      padding-bottom: 5px;
+      margin-top: 25px;
+      font-size: 18px;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+
+    input:focus, select:focus {
+      border-color: #004aad;
+      outline: none;
+    }
+
+    .checkbox-group {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #eee;
+      margin-top: 10px;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      margin: 10px 0;
+      font-size: 15px;
+      cursor: pointer;
+      color: #444;
+    }
+
+    .checkbox-label input {
+      width: auto;
+      margin-top: 0;
+      margin-left: 10px;
+      transform: scale(1.2);
+    }
+
+    button {
+      background: #004aad;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 30px;
+      font-size: 18px;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #00337a;
+    }
+
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      color: #666;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .back-link:hover {
+      color: #004aad;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>نموذج طلب تأمين السيارات</h2>
+
+  <h3>👤 معلومات السائق</h3>
+  <input type="number" id="age" placeholder="سن السائق">
+  <input type="number" id="licenseExperience" placeholder="أقدمية رخصة السياقة (بالسنوات)">
+  <input type="text" id="profession" placeholder="المهنة">
+  <input type="email" id="email" placeholder="البريد الإلكتروني">
+
+  <h3>🚗 معلومات المركبة</h3>
+  <input type="text" id="marque" placeholder="ماركة السيارة (مثال: Renault)">
+  <input type="text" id="modele" placeholder="نوع السيارة / الموديل (مثال: Clio)">
+  <input type="text" id="version" placeholder="النسخة (Version)">
+  <input type="number" id="puissanceFiscale" placeholder="القوة الجبائية (Puissance Fiscale)">
+  <input type="number" id="nombrePlaces" placeholder="عدد المقاعد">
+  <input type="text" id="immatriculation" placeholder="رقم تسجيل السيارة (الترقيم)">
+  <input type="text" id="usage" placeholder="استعمال السيارة (مثال: شخصي، تجاري)">
+  <input type="text" id="zoneCirculation" placeholder="منطقة السير (الولاية)">
+
+  <h3>🛡️ نوع العقد والضمانات المطلوبة</h3>
+  <div class="checkbox-group">
+    <label class="checkbox-label"><input type="checkbox" id="rc"> Responsabilité civile (المسؤولية المدنية)</label>
+    <label class="checkbox-label"><input type="checkbox" id="defenseRecours"> Défense et recours</label>
+    <label class="checkbox-label"><input type="checkbox" id="assistance"> Assistance (المساعدة أثناء السفر)</label>
+    <label class="checkbox-label"><input type="checkbox" id="brisGlace"> Bris de glace (كسر الزجاج)</label>
+    <label class="checkbox-label"><input type="checkbox" id="brisGlacePanoramique"> Bris de glace panoramique</label>
+    <label class="checkbox-label"><input type="checkbox" id="volIncendie"> Vol et incendie (السرقة والحريق)</label>
+    <label class="checkbox-label"><input type="checkbox" id="rachatVétusté"> Rachat vétusté et franchise</label>
+    <label class="checkbox-label"><input type="checkbox" id="perteJouissance"> Perte de jouissance</label>
+    <label class="checkbox-label"><input type="checkbox" id="topReparateur"> Top réparateur</label>
+    <label class="checkbox-label"><input type="checkbox" id="dommagesCollision"> Dommages collision (30,000 DA)</label>
+    <label class="checkbox-label"><input type="checkbox" id="personnesTransportees"> Personnes transportées (تأمين الركاب)</label>
+  </div>
+
+  <button id="submitBtn">إرسال طلب التأمين</button>
+  
+  <a href="./home.html" class="back-link">العودة إلى الصفحة الرئيسية</a>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // إعدادات Firebase الحقيقية والخاصة بمشروعك المتصل بنظام الحسابات
+  const firebaseConfig = {
+    apiKey: "AIzaSyAQsQ9BU6gcps6XSVgKGKLn7pq_VKeX9Tk",
+    authDomain: "assurix-17f53.firebaseapp.com",
+    projectId: "assurix-17f53",
+    storageBucket: "assurix-17f53.firebasestorage.app",
+    messagingSenderId: "793139269214",
+    appId: "1:793139269214:web:c0bc20bd1c14a98cb86ecf"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  document.getElementById("submitBtn").addEventListener("click", async () => {
+    const btn = document.getElementById("submitBtn");
+
+    // تجميع بيانات السائق
+    const driver = {
+      age: document.getElementById("age").value.trim(),
+      licenseExperience: document.getElementById("licenseExperience").value.trim(),
+      profession: document.getElementById("profession").value.trim(),
+      email: document.getElementById("email").value.trim()
+    };
+
+    // تجميع بيانات السيارة
+    const vehicle = {
+      marque: document.getElementById("marque").value.trim(),
+      modele: document.getElementById("modele").value.trim(),
+      version: document.getElementById("version").value.trim(),
+      puissanceFiscale: document.getElementById("puissanceFiscale").value.trim(),
+      nombrePlaces: document.getElementById("nombrePlaces").value.trim(),
+      immatriculation: document.getElementById("immatriculation").value.trim(),
+      usage: document.getElementById("usage").value.trim(),
+      zoneCirculation: document.getElementById("zoneCirculation").value.trim()
+    };
+
+    // التحقق من ملء الحقول الأساسية للسائق والسيارة
+    if (!driver.age || !driver.email || !vehicle.marque || !vehicle.immatriculation) {
+      alert("يرجى ملء البيانات الأساسية للسائق والمركبة (السن، البريد، ماركة السيارة، ورقم التسجيل)");
+      return;
+    }
+
+    // تجميع الضمانات والعقود المحددة
+    const contracts = {
+      rc: document.getElementById("rc").checked,
+      defenseRecours: document.getElementById("defenseRecours").checked,
+      assistance: document.getElementById("assistance").checked,
+      brisGlace: document.getElementById("brisGlace").checked,
+      brisGlacePanoramique: document.getElementById("brisGlacePanoramique").checked,
+      volIncendie: document.getElementById("volIncendie").checked,
+      rachatVétusté: document.getElementById("rachatVétusté").checked,
+      perteJouissance: document.getElementById("perteJouissance").checked,
+      topReparateur: document.getElementById("topReparateur").checked,
+      dommagesCollision: document.getElementById("dommagesCollision").checked,
+      personnesTransportees: document.getElementById("personnesTransportees").checked
+    };
+
+    btn.disabled = true;
+    btn.innerText = "جاري إرسال طلبكم الآن...";
+
+    try {
+      // حفظ طلب التأمين بالكامل في Cloud Firestore
+      await addDoc(collection(db, "car_requests"), {
+        driver,
+        vehicle,
+        contracts,
+        status: "new", // حالة الطلب الافتراضية للمراجعة لاحقاً من شركات التأمين
+        createdAt: new Date().toISOString()
+      });
+
+      alert("تم إرسال طلب التأمين الخاص بك بنجاح 🎉 ستصلك العروض قريباً.");
+      window.location.href = "./home.html";
+
+    } catch (error) {
+      console.error("حدث خطأ أثناء تخزين البيانات:", error);
+      alert("فشل إرسال الطلب: " + error.message);
+      btn.disabled = false;
+      btn.innerText = "إرسال طلب التأمين";
+    }
+  });
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
+</script>
+
+</body>
+</html>
