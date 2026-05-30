@@ -27,6 +27,12 @@ box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 h2 {
 color: #004aad;
 text-align: center;
+margin-bottom: 10px;
+}
+p.subtitle {
+text-align: center;
+color: #666;
+font-size: 14px;
 margin-bottom: 20px;
 }
 input, button {
@@ -61,18 +67,25 @@ background: #003580;
 
 <div class="box">
 <h2>تسجيل شركة تأمين جديدة</h2>
+<p class="subtitle">يرجى ملء البيانات لطلب الانضمام إلى المنصة</p>
+
 <input type="text" id="companyName" placeholder="اسم الشركة">
 <input type="email" id="email" placeholder="البريد الإلكتروني">
 <input type="password" id="password" placeholder="كلمة المرور">
-<button onclick="registerCompany()">تسجيل الحساب</button>
+<input type="tel" id="phone" placeholder="رقم الهاتف">
+<input type="text" id="license" placeholder="رقم رخصة النشاط">
+<input type="text" id="nrc" placeholder="رقم السجل التجاري (NRC)">
+<input type="text" id="nif" placeholder="الرقم التعريف الجبائي (NIF)">
+
+<button onclick="registerCompany()">إرسال طلب التسجيل</button>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// الإعدادات الحقيقية الخاصة بمشروعك
+// إعدادات Firebase الحقيقية الخاصة بك
 const firebaseConfig = {
   apiKey: "AIzaSyAQsQ9BU6gcps6XSVgKGKLn7pq_VKeX9Tk",
   authDomain: "assurix-17f53.firebaseapp.com",
@@ -90,30 +103,41 @@ window.registerCompany = async function() {
   const companyName = document.getElementById("companyName").value.trim();
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
+  const phone = document.getElementById("phone").value.trim();
+  const license = document.getElementById("license").value.trim();
+  const nrc = document.getElementById("nrc").value.trim();
+  const nif = document.getElementById("nif").value.trim();
 
-  if(!companyName || !email || !password) {
-    alert("يرجى ملء جميع الحقول");
+  // التحقق من ملء كافة الحقول المضافة حديثاً
+  if(!companyName || !email || !password || !phone || !license || !nrc || !nif) {
+    alert("يرجى ملء جميع الحقول المطلوبة");
     return;
   }
 
   try {
-    // 1. إنشاء الحساب في الـ Authentication
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
+    // 1. إنشاء حساب المصادقة للمستخدم
+    await createUserWithEmailAndPassword(auth, email, password);
 
-    // 2. حفظ بيانات الشركة الإضافية في الـ Firestore Database
-    await setDoc(doc(db, "insurance_companies", user.uid), {
-      companyName: companyName,
-      email: email,
+    // 2. حفظ البيانات الموسعة بالكامل في Firestore مع الحالة "pending"
+    await addDoc(collection(db, "insurance_companies"), {
+      companyName,
+      email,
+      phone,
+      license,
+      nrc,
+      nif,
+      status: "pending",
       createdAt: new Date().toISOString()
     });
 
-    alert("تم تسجيل الشركة بنجاح!");
-    window.location.href = "./dashboard.html";
+    alert("تم إرسال طلبك بنجاح! حسابك الآن قيد المراجعة والتدقيق.");
+    
+    // التوجيه إلى صفحة الانتظار أو الرئيسية بدلاً من الدخول الفوري للوحة التحكم
+    window.location.href = "./home.html";
 
   } catch(error) {
     console.error(error);
-    alert("حدث خطأ أثناء التسجيل: " + error.message);
+    alert("حدث خطأ أثناء إرسال البيانات: " + error.message);
   }
 }
 </script>
