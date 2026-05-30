@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel - Assurix</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  padding: 20px;
+  direction: rtl; /* لجعل اللوحة متناسقة مع اللغة العربية والإنجليزية */
+}
+h2 {
+  color: #004aad;
+  text-align: center;
+  margin-bottom: 20px;
+}
+.card {
+  background: #fff;
+  padding: 20px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  text-align: right;
+}
+.card h3 {
+  margin-top: 0;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+p {
+  margin: 8px 0;
+  color: #555;
+}
+button {
+  padding: 10px 20px;
+  margin: 5px;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: 0.2s;
+}
+.approve {
+  background: #28a745;
+  color: white;
+}
+.approve:hover {
+  background: #218838;
+}
+.reject {
+  background: #dc3545;
+  color: white;
+}
+.reject:hover {
+  background: #c82333;
+}
+.files-box {
+  background: #f9f9f9;
+  padding: 10px;
+  border-radius: 5px;
+  margin: 10px 0;
+  border: 1px dashed #ccc;
+}
+a {
+  color: #004aad;
+  text-decoration: none;
+  font-weight: bold;
+}
+a:hover {
+  text-decoration: underline;
+}
+.no-file {
+  color: #999;
+  font-style: italic;
+}
+</style>
+</head>
+
+<body>
+
+<h2>لوحة إدارة وتدقيق شركات التأمين</h2>
+
+<div id="list"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs, updateDoc, doc } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ربط لوحة التحكم بإعدادات مشروعك الحقيقية لـ Assurix
+const firebaseConfig = {
+  apiKey: "AIzaSyAQsQ9BU6gcps6XSVgKGKLn7pq_VKeX9Tk",
+  authDomain: "assurix-17f53.firebaseapp.com",
+  projectId: "assurix-17f53",
+  storageBucket: "assurix-17f53.firebasestorage.app",
+  messagingSenderId: "793139269214",
+  appId: "1:793139269214:web:c0bc20bd1c14a98cb86ecf"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const list = document.getElementById("list");
+
+async function load(){
+  try {
+    const snap = await getDocs(collection(db, "insurance_companies"));
+    list.innerHTML = "";
+
+    if(snap.empty) {
+      list.innerHTML = "<p style='text-align:center; color:#666;'>لا توجد طلبات تسجيل حالياً.</p>";
+      return;
+    }
+
+    snap.forEach((d)=>{
+      const data = d.data();
+
+      // التحقق الذكي من وجود روابط المستندات قبل عرضها
+      const licenseLink = data.licenseFileUrl ? `<a href="${data.licenseFileUrl}" target="_blank">📄 عرض وثيقة الاعتماد</a>` : `<span class="no-file">لم يتم رفع ملف الاعتماد</span>`;
+      const nrcLink = data.nrcFileUrl ? `<a href="${data.nrcFileUrl}" target="_blank">📄 عرض وثيقة السجل NRC</a>` : `<span class="no-file">لم يتم رفع ملف NRC</span>`;
+      const nifLink = data.nifFileUrl ? `<a href="${data.nifFileUrl}" target="_blank">📄 عرض وثيقة التعريف NIF</span>` : `<span class="no-file">لم يتم رفع ملف NIF</span>`;
+
+      // تحديد لون عرض الحالة لسهولة القراءة والتدقيق
+      let statusColor = "#ffc107"; // أصفر للـ pending
+      if(data.status === "approved") statusColor = "#28a745";
+      if(data.status === "rejected") statusColor = "#dc3545";
+
+      list.innerHTML += `
+        <div class="card">
+          <h3>${data.companyName || "اسم غير معرف"}</h3>
+          <p><b>البريد الإلكتروني:</b> ${data.email}</p>
+          <p><b>رقم الهاتف:</b> ${data.phone || "غير متوفر"}</p>
+          <p><b>عنوان المقر:</b> ${data.address || "غير متوفر"}</p>
+          <p><b>رقم الاعتماد:</b> ${data.license}</p>
+          <p><b>رقم السجل التجاري (NRC):</b> ${data.nrc}</p>
+          <p><b>رقم التعريف الجبائي (NIF):</b> ${data.nif}</p>
+          <p><b>حالة الحساب الحالية:</b> <span style="color: ${statusColor}; font-weight: bold;">${data.status}</span></p>
+
+          <div class="files-box">
+            <p><b>المستندات المرفقة للشركة:</b></p>
+            ${licenseLink}<br>
+            ${nrcLink}<br>
+            ${nifLink}
+          </div>
+
+          <button class="approve" onclick="approve('${d.id}')">تفعيل الحساب (Approve)</button>
+          <button class="reject" onclick="reject('${d.id}')">رفض الحساب (Reject)</button>
+        </div>
+      `;
+    });
+  } catch (error) {
+    console.error("خطأ أثناء جلب البيانات:", error);
+    list.innerHTML = "<p style='text-align:center; color:red;'>حدث خطأ أثناء تحميل البيانات، تأكد من إعدادات الحماية في Firestore.</p>";
+  }
+}
+
+window.approve = async (id)=>{
+  if(confirm("هل أنت متأكد من تفعيل وقبول هذه الشركة؟")) {
+    await updateDoc(doc(db, "insurance_companies", id), {
+      status: "approved"
+    });
+    load();
+  }
+}
+
+window.reject = async (id)=>{
+  if(confirm("هل أنت متأكد من رفض طلب هذه الشركة؟")) {
+    await updateDoc(doc(db, "insurance_companies", id), {
+      status: "rejected"
+    });
+    load();
+  }
+}
+
+// تشغيل جلب البيانات عند فتح الصفحة مباشرة
+load();
+
+</script>
+
+</body>
+</html>
