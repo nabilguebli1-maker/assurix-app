@@ -38,14 +38,6 @@
       margin-bottom: 20px;
     }
 
-    label {
-      display: block;
-      margin-top: 15px;
-      font-weight: bold;
-      font-size: 14px;
-      color: #333;
-    }
-
     input, button {
       width: 100%;
       padding: 12px;
@@ -56,10 +48,9 @@
       font-size: 16px;
     }
 
-    input[type="file"] {
-      border: 1px dashed #004aad;
-      background: #f9f9f9;
-      padding: 10px;
+    input:focus {
+      border-color: #004aad;
+      outline: none;
     }
 
     button {
@@ -100,20 +91,12 @@
 
   <input type="text" id="companyName" placeholder="اسم الشركة">
   <input type="email" id="email" placeholder="البريد الإلكتروني">
+  <input type="password" id="password" placeholder="Password">
   <input type="text" id="phone" placeholder="رقم الهاتف">
   <input type="text" id="address" placeholder="عنوان مقر الشركة">
   <input type="text" id="license" placeholder="رقم الاعتماد">
   <input type="text" id="nrc" placeholder="رقم السجل التجاري NRC">
   <input type="text" id="nif" placeholder="رقم التعريف الجبائي NIF">
-
-  <label>وثيقة الاعتماد (صورة أو PDF)</label>
-  <input type="file" id="licenseFile">
-
-  <label>وثيقة NRC</label>
-  <input type="file" id="nrcFile">
-
-  <label>وثيقة NIF</label>
-  <input type="file" id="nifFile">
 
   <button id="submitBtn">إرسال طلب التسجيل</button>
   
@@ -122,9 +105,10 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  // تم استعادة بيانات Firebase الحقيقية والمطابقة لمشروعك الأصلي هنا
+  // إعدادات Firebase الحقيقية لمشروعك
   const firebaseConfig = {
     apiKey: "AIzaSyAQsQ9BU6gcps6XSVgKGKLn7pq_VKeX9Tk",
     authDomain: "assurix-17f53.firebaseapp.com",
@@ -135,65 +119,38 @@
   };
 
   const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // إعدادات Cloudinary الخاصة بك
-  const cloudName = "dzge7uzkq";
-  const uploadPreset = "unsigned_upload"; 
-
-  async function uploadFile(file) {
-    if (!file) return "لم يتم الرفع"; // معالجة حالة عدم اختيار ملف لتفادي توقف الكود
-    
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", uploadPreset);
-
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, {
-      method: "POST",
-      body: formData
-    });
-
-    if (!res.ok) {
-      throw new Error("فشل رفع أحد الملفات إلى Cloudinary");
-    }
-
-    const data = await res.json();
-    return data.secure_url;
-  }
-
-  // ربط حدث الضغط على زر الإرسال
   document.getElementById("submitBtn").addEventListener("click", async () => {
     const btn = document.getElementById("submitBtn");
-    
-    const companyName = document.getElementById("companyName").value.trim();
+
     const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const companyName = document.getElementById("companyName").value.trim();
     const phone = document.getElementById("phone").value.trim();
     const address = document.getElementById("address").value.trim();
     const license = document.getElementById("license").value.trim();
     const nrc = document.getElementById("nrc").value.trim();
     const nif = document.getElementById("nif").value.trim();
 
-    const licenseFile = document.getElementById("licenseFile").files[0];
-    const nrcFile = document.getElementById("nrcFile").files[0];
-    const nifFile = document.getElementById("nifFile").files[0];
-
-    // التحقق الأساسي من الحقول النصية المفتاحية
-    if (!companyName || !email || !phone || !address || !license || !nrc || !nif) {
-      alert("يرجى ملء جميع الحقول النصية المطلوبة وعنوان الشركة");
+    // التحقق من المدخلات
+    if (!email || !password || !companyName || !phone || !address || !license || !nrc || !nif) {
+      alert("يرجى ملء جميع الحقول المطلوبة بما في ذلك كلمة المرور");
       return;
     }
 
     btn.disabled = true;
-    btn.innerText = "جاري رفع الملفات وإرسال الطلب...";
+    btn.innerText = "جاري إنشاء الحساب وحفظ البيانات...";
 
     try {
-      // رفع الملفات والحصول على الروابط المباشرة من Cloudinary
-      const licenseFileUrl = await uploadFile(licenseFile);
-      const nrcFileUrl = await uploadFile(nrcFile);
-      const nifFileUrl = await uploadFile(nifFile);
+      // 1. إنشاء حساب المصادقة (Auth) باستخدام البريد وكلمة المرور
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-      // حفظ البيانات الموسعة بالكامل في قاعدة بيانات Firestore
+      // 2. حفظ البيانات الموسعة في الـ Cloud Firestore وربطها بالـ uid الخاص بالمستخدم
       await addDoc(collection(db, "insurance_companies"), {
+        uid: user.uid,
         companyName,
         email,
         phone,
@@ -201,19 +158,19 @@
         license,
         nrc,
         nif,
-        licenseFileUrl,
-        nrcFileUrl,
-        nifFileUrl,
+        licenseFileUrl: "",
+        nrcFileUrl: "",
+        nifFileUrl: "",
         status: "pending",
         createdAt: new Date().toISOString()
       });
 
-      alert("تم إرسال طلب التسجيل بنجاح 🎉");
+      alert("تم تسجيل الشركة بنجاح - في انتظار الموافقة 🎉");
       window.location.href = "./home.html";
 
     } catch (error) {
       console.error(error);
-      alert("حدث خطأ أثناء الإرسال: " + error.message);
+      alert("حدث خطأ أثناء التسجيل: " + error.message);
       btn.disabled = false;
       btn.innerText = "إرسال طلب التسجيل";
     }
