@@ -1,86 +1,110 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Assurix - Home</title>
-
-<link rel="manifest" href="./manifest.json">
-
-<meta name="theme-color" content="#004aad">
+<title>لوحة التأمين - Assurix</title>
 
 <style>
-body{
-font-family:Arial;
-background:#f2f2f2;
-display:flex;
-flex-direction: column;
-justify-content:center;
-align-items:center;
-height:100vh;
-margin:0;
+body {
+  font-family: Arial, sans-serif;
+  background: #f2f2f2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
-/* تنسيق إضافي للعنوان الجديد ليكون واضحاً في الأعلى */
-.version-title {
-color: #004aad;
-margin-bottom: 20px;
-text-align: center;
-font-family: Arial, sans-serif;
+.container {
+  background: white;
+  padding: 40px 30px;
+  border-radius: 15px;
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-.container{
-background:white;
-padding:30px;
-border-radius:10px;
-width:90%;
-max-width:400px;
-text-align:center;
-box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+h2 {
+  color: #004aad;
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 28px;
 }
 
-button{
-width:100%;
-padding:15px;
-margin-top:15px;
-border:none;
-background:#004aad;
-color:white;
-font-size:16px;
-cursor:pointer;
-border-radius:5px;
+p.welcome-text {
+  color: #666;
+  font-size: 15px;
+  margin-bottom: 30px;
+}
+
+.box {
+  padding: 18px;
+  margin: 12px 0;
+  background: #f8fafd;
+  border: 1px solid #e1e9f5;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.box:hover {
+  background: #004aad;
+  color: white;
+  border-color: #004aad;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 74, 173, 0.15);
+}
+
+.admin-box {
+  background: #fff5f5;
+  border-color: #ffe3e3;
+  color: #c82333;
+  margin-top: 25px;
+}
+
+.admin-box:hover {
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.15);
 }
 </style>
 </head>
-
 <body>
-
-<h1 class="version-title">VERSION 2 - HOME PAGE</h1>
 
 <div class="container">
 
-<h1>Assurix</h1>
+  <h2>منصة Assurix الرقمية</h2>
+  <p class="welcome-text">مرحباً بك، يرجى اختيار الوجهة المناسبة لبدء الاستخدام</p>
 
-<button onclick="window.location.href='./index.html'">
-🚗 طالب تأمين
-</button>
+  <div class="box" onclick="location.href='car-request.html'">
+    <span>🚗</span> طالب التأمين
+  </div>
 
-<button onclick="window.location.href='./login.html'">
-🧑‍💼 شركة تأمين
-</button>
+  <div class="box" onclick="location.href='login.html'">
+    <span>🏢</span> شركة التأمين (دخول)
+  </div>
 
-<button onclick="window.location.href='./company-register.html'">
-📝 تسجيل شركة تأمين
-</button>
+  <div class="box" onclick="location.href='company-register.html'">
+    <span>🆕</span> تسجيل شركة تأمين
+  </div>
+
+  <div class="box admin-box" onclick="location.href='admin.html'">
+    <span>🛠️</span> لوحة الإدارة
+  </div>
 
 </div>
-
-<script>
-if ('serviceWorker' in navigator) {
-navigator.serviceWorker.register('./sw.js');
-}
-</script>
 
 </body>
 </html>
