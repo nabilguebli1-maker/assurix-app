@@ -1,185 +1,121 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تسجيل شركة تأمين - Assurix</title>
-  
-  <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#004aad">
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      padding: 20px;
-      margin: 0;
-    }
-
-    .container {
-      background: white;
-      padding: 30px;
-      border-radius: 15px;
-      max-width: 500px;
-      margin: auto;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-    }
-
-    h2 {
-      color: #004aad;
-      text-align: center;
-      margin-bottom: 10px;
-    }
-
-    p.subtitle {
-      text-align: center;
-      color: #666;
-      font-size: 14px;
-      margin-bottom: 20px;
-    }
-
-    label {
-      display: block;
-      margin-top: 15px;
-      font-weight: bold;
-      font-size: 14px;
-      color: #333;
-    }
-
-    input, button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 8px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
-      font-size: 16px;
-    }
-
-    input[type="file"] {
-      border: 1px dashed #004aad;
-      background: #f9f9f9;
-      padding: 10px;
-    }
-
-    button {
-      background: #004aad;
-      color: white;
-      border: none;
-      cursor: pointer;
-      font-weight: bold;
-      margin-top: 25px;
-      transition: 0.3s;
-    }
-
-    button:hover {
-      background: #00337a;
-    }
-
-    .back-link {
-      display: block;
-      text-align: center;
-      margin-top: 15px;
-      color: #666;
-      text-decoration: none;
-      font-size: 14px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تسجيل شركة تأمين - Assurix</title>
+<style>
+body{
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+background:#f2f2f2;
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+margin:0;
+padding: 20px 0;
+box-sizing: border-box;
+}
+.box{
+background:white;
+padding:30px;
+border-radius:10px;
+width:90%;
+max-width:400px;
+box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+h2 {
+color: #004aad;
+text-align: center;
+margin-bottom: 20px;
+}
+input, button {
+width:100%;
+padding:12px;
+margin-top:12px;
+border-radius: 6px;
+border: 1px solid #ccc;
+box-sizing: border-box;
+font-size: 15px;
+}
+input:focus {
+border-color: #004aad;
+outline: none;
+}
+button{
+background:#004aad;
+color:white;
+border:none;
+cursor:pointer;
+font-weight: bold;
+font-size: 16px;
+margin-top: 20px;
+transition: background 0.3s ease;
+}
+button:hover {
+background: #003580;
+}
+</style>
 </head>
-
 <body>
 
-<div class="container">
-  <h2>تسجيل شركة تأمين</h2>
-  <p class="subtitle">يرجى إدخال بيانات الشركة لتقديم طلب الانضمام</p>
-
-  <input type="text" id="companyName" placeholder="اسم الشركة">
-  <input type="email" id="email" placeholder="البريد الإلكتروني">
-  <input type="text" id="phone" placeholder="رقم الهاتف">
-  <input type="text" id="license" placeholder="رقم الاعتماد">
-  <input type="text" id="nrc" placeholder="رقم السجل التجاري NRC">
-  <input type="text" id="nif" placeholder="رقم التعريف الجبائي NIF">
-
-  <label>وثيقة الاعتماد (صورة أو PDF)</label>
-  <input type="file" id="licenseFile">
-
-  <label>وثيقة NRC</label>
-  <input type="file" id="nrcFile">
-
-  <label>وثيقة NIF</label>
-  <input type="file" id="nifFile">
-
-  <button onclick="registerCompany()">إرسال طلب التسجيل</button>
-  
-  <a href="./home.html" class="back-link">العودة للرئيسية</a>
+<div class="box">
+<h2>تسجيل شركة تأمين جديدة</h2>
+<input type="text" id="companyName" placeholder="اسم الشركة">
+<input type="email" id="email" placeholder="البريد الإلكتروني">
+<input type="password" id="password" placeholder="كلمة المرور">
+<button onclick="registerCompany()">تسجيل الحساب</button>
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  // إعدادات Firebase الخاصة بمشروعك Assurix
-  const firebaseConfig = {
-    apiKey: "AIzaSyAQsQ9BU6gcps6XSVgKGKLn7pq_VKeX9Tk",
-    authDomain: "assurix-17f53.firebaseapp.com",
-    projectId: "assurix-17f53",
-    storageBucket: "assurix-17f53.firebasestorage.app",
-    messagingSenderId: "793139269214",
-    appId: "1:793139269214:web:c0bc20bd1c14a98cb86ecf"
-  };
+// الإعدادات الحقيقية الخاصة بمشروعك
+const firebaseConfig = {
+  apiKey: "AIzaSyAQsQ9BU6gcps6XSVgKGKLn7pq_VKeX9Tk",
+  authDomain: "assurix-17f53.firebaseapp.com",
+  projectId: "assurix-17f53",
+  storageBucket: "assurix-17f53.firebasestorage.app",
+  messagingSenderId: "532252538173",
+  appId: "1:532252538173:web:96e2be6dfdf2d9ca7ba36e"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-  window.registerCompany = async function() {
-    const btn = document.querySelector("button");
-    
-    // سحب القيم من الحقول
-    const companyName = document.getElementById("companyName").value;
-    const email = document.getElementById("email").value;
+window.registerCompany = async function() {
+  const companyName = document.getElementById("companyName").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
 
-    if (!companyName || !email) {
-      alert("يرجى إدخال اسم الشركة والبريد الإلكتروني");
-      return;
-    }
-
-    btn.disabled = true;
-    btn.innerText = "جاري إرسال الطلب...";
-
-    try {
-      // إضافة الطلب إلى مجموعة insurance_companies في Firestore
-      await addDoc(collection(db, "insurance_companies"), {
-        companyName: companyName,
-        email: email,
-        phone: document.getElementById("phone").value,
-        license: document.getElementById("license").value,
-        nrc: document.getElementById("nrc").value,
-        nif: document.getElementById("nif").value,
-        // حفظ أسماء الملفات فقط (يتطلب Firebase Storage لرفع الملفات الفعلية)
-        licenseFile: document.getElementById("licenseFile").files[0]?.name || "لم يتم الرفع",
-        nrcFile: document.getElementById("nrcFile").files[0]?.name || "لم يتم الرفع",
-        nifFile: document.getElementById("nifFile").files[0]?.name || "لم يتم الرفع",
-        status: "pending", // حالة الطلب تكون "قيد المراجعة" افتراضياً
-        createdAt: new Date()
-      });
-
-      alert("تم إرسال طلب الانضمام بنجاح 🎉 سنقوم بمراجعة بياناتكم قريباً.");
-      window.location.href = "./home.html";
-      
-    } catch (error) {
-      console.error("خطأ في Firestore:", error);
-      alert("حدث خطأ أثناء الإرسال. يرجى التحقق من اتصال الإنترنت.");
-      btn.disabled = false;
-      btn.innerText = "إرسال طلب التسجيل";
-    }
+  if(!companyName || !email || !password) {
+    alert("يرجى ملء جميع الحقول");
+    return;
   }
-</script>
 
-<script>
-  // تفعيل الـ Service Worker لضمان استجابة التطبيق
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js');
+  try {
+    // 1. إنشاء الحساب في الـ Authentication
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // 2. حفظ بيانات الشركة الإضافية في الـ Firestore Database
+    await setDoc(doc(db, "insurance_companies", user.uid), {
+      companyName: companyName,
+      email: email,
+      createdAt: new Date().toISOString()
+    });
+
+    alert("تم تسجيل الشركة بنجاح!");
+    window.location.href = "./dashboard.html";
+
+  } catch(error) {
+    console.error(error);
+    alert("حدث خطأ أثناء التسجيل: " + error.message);
   }
+}
 </script>
 
 </body>
